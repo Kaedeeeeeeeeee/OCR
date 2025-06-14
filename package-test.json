@@ -1,0 +1,21 @@
+{
+  "name": "quick-ocr-test",
+  "version": "1.0.0",
+  "main": "src/minimal-tray-test.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "appId": "com.quickocr.test",
+  "productName": "QuickOCR-Test",
+  "files": [
+    "src/**/*"
+  ],
+  "mac": {
+    "category": "public.app-category.utilities",
+    "identity": null,
+    "hardenedRuntime": false,
+    "gatekeeperAssess": false,
+    "target": "dmg"
+  }
+} 

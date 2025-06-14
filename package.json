@@ -1,0 +1,91 @@
+{
+  "name": "quick-ocr",
+  "version": "1.0.0",
+  "main": "src/main-new.js",
+  "scripts": {
+    "start": "npx electron --trace-warnings ./src/main-new.js",
+    "dev": "npx electron --trace-warnings ./src/main-new.js --debug",
+    "pack": "node src/copy-preload-scripts.js && electron-builder --dir",
+    "dist": "node src/copy-preload-scripts.js && electron-builder",
+    "dist:mac": "node src/copy-preload-scripts.js && electron-builder --mac",
+    "dist:win": "node src/copy-preload-scripts.js && electron-builder --win",
+    "dist:debug": "node src/copy-preload-scripts.js && electron-builder --mac --config.extraMetadata.main=src/main-new.js"
+  },
+  "keywords": [
+    "ocr",
+    "screenshot",
+    "text-recognition"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "一个跨平台的即时OCR软件，可通过快捷键快速识别屏幕上的文字",
+  "dependencies": {
+    "@google-cloud/vision": "^4.3.3",
+    "electron-store": "^10.0.1",
+    "sharp": "^0.34.1",
+    "tesseract.js": "^6.0.1"
+  },
+  "devDependencies": {
+    "electron": "^36.1.0",
+    "electron-builder": "^26.0.12",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.quickocr.app",
+    "productName": "QuickOCR",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "src/assets",
+        "to": "assets"
+      },
+      {
+        "from": "src/views",
+        "to": "views"
+      },
+      {
+        "from": "src/utils",
+        "to": "utils"
+      },
+      {
+        "from": "src/preload.js",
+        "to": "preload.js"
+      },
+      {
+        "from": "src/preload-bundle.js",
+        "to": "preload-bundle.js"
+      },
+      {
+        "from": "./chi_sim.traineddata",
+        "to": "./"
+      },
+      {
+        "from": "./eng.traineddata",
+        "to": "./"
+      },
+      {
+        "from": "./jpn.traineddata",
+        "to": "./"
+      }
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "target": "dmg",
+      "darkModeSupport": true,
+      "icon": "src/assets/icon-mac.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/icon-win.png"
+    }
+  }
+}

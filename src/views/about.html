@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About QuickOCR</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    }
+    
+    body {
+      background-color: transparent;
+      color: #333;
+      padding: 20px;
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 15px;
+    }
+    
+    .container {
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    
+    .version {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 15px;
+    }
+    
+    .description {
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    
+    .copyright {
+      font-size: 12px;
+      color: #999;
+      margin-top: 20px;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      body {
+        color: #f5f5f7;
+      }
+      
+      h1 {
+        color: #f5f5f7;
+      }
+      
+      .version {
+        color: #aaa;
+      }
+      
+      .copyright {
+        color: #888;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="80" height="80" rx="16" fill="#007AFF"/>
+        <path d="M24 56V24H40C44.4183 24 48 27.5817 48 32C48 36.4183 44.4183 40 40 40H28M28 40V56M28 40H40M40 40H48L56 56" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1 id="title">About QuickOCR</h1>
+    <div class="version" id="version">Version: 1.0.0</div>
+    <div class="description" id="description">
+      A cross-platform instant OCR software that quickly recognizes text on screen using hotkeys.
+    </div>
+    <div class="copyright" id="copyright">© 2023 QuickOCR Team</div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 监听国际化数据
+      window.electronAPI.onI18nData((data) => {
+        // 更新标题
+        if (data.title) {
+          document.title = data.title;
+          document.getElementById('title').textContent = data.title;
+        }
+        
+        // 更新版本
+        if (data.version) {
+          document.getElementById('version').textContent = data.version;
+        }
+        
+        // 更新描述
+        if (data.description) {
+          document.getElementById('description').textContent = data.description;
+        }
+        
+        // 更新版权信息
+        if (data.copyright) {
+          document.getElementById('copyright').textContent = data.copyright;
+        }
+      });
+    });
+  </script>
+</body>
+</html> 

@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickOCR</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    }
+    
+    body {
+      background-color: #f5f5f7;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      color: #333;
+      font-size: 14px;
+    }
+    
+    header {
+      background-color: #ffffff;
+      padding: 15px 20px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .tip {
+      color: #666;
+      font-size: 13px;
+    }
+    
+    .shortcut {
+      background-color: #f2f2f2;
+      border-radius: 3px;
+      padding: 2px 5px;
+      font-family: monospace;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    
+    .btn {
+      background-color: #007aff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    
+    .btn-secondary {
+      background-color: #f2f2f2;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #ddd;
+    }
+    
+    main {
+      flex-grow: 1;
+      padding: 20px;
+      overflow: auto;
+    }
+    
+    .ocr-result {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      white-space: pre-wrap;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: calc(100% - 30px);
+    }
+    
+    .history-item {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .history-item:last-child {
+      border-bottom: none;
+    }
+    
+    .history-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 5px;
+    }
+    
+    .history-content {
+      white-space: pre-wrap;
+    }
+    
+    .no-result {
+      color: #999;
+      text-align: center;
+      margin-top: 100px;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1e1e1e;
+        color: #f5f5f7;
+      }
+      
+      header {
+        background-color: #252525;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+      }
+      
+      .tip {
+        color: #ccc;
+      }
+      
+      .shortcut {
+        background-color: #333;
+        color: #eee;
+      }
+      
+      .ocr-result {
+        background-color: #252525;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      
+      .btn-secondary {
+        background-color: #333;
+        color: #eee;
+      }
+      
+      .btn-secondary:hover {
+        background-color: #444;
+      }
+      
+      .no-result {
+        color: #777;
+      }
+      
+      .history-item {
+        border-bottom: 1px solid #333;
+      }
+      
+      .history-meta {
+        color: #777;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="tip" id="shortcut-tip">ショートカット <span class="shortcut" id="shortcut"></span> を使用していつでも画面上のテキストを認識できます</div>
+    <div class="actions">
+      <button class="btn btn-secondary" id="clear-btn">履歴をクリア</button>
+    </div>
+  </header>
+  
+  <main>
+    <div class="ocr-result" id="result">
+      <div class="no-result" id="no-result">認識結果はまだありません</div>
+    </div>
+  </main>
+  
+  <script>
+    const resultElement = document.getElementById('result');
+    const noResultElement = document.getElementById('no-result');
+    const shortcutElement = document.getElementById('shortcut');
+    const shortcutTipElement = document.getElementById('shortcut-tip');
+    const clearBtn = document.getElementById('clear-btn');
+    
+    let currentResult = '';
+    let historyResults = [];
+    const MAX_HISTORY = 5; // 最多保存5条历史记录
+    let i18n = {};
+    let isInitialized = false; // 标记是否已初始化
+    
+    // API检查功能
+    function checkElectronAPI() {
+      const hasAPI = typeof window.electronAPI !== 'undefined';
+      
+      if (!hasAPI) {
+        console.error('electronAPI未定义，应用无法正常工作');
+      }
+      
+      return hasAPI;
+    }
+    
+    // 调试辅助函数
+    function logDebug(message, data) {
+      const timestamp = new Date().toTimeString().split(' ')[0];
+      console.log(`[${timestamp}] ${message}`, data !== undefined ? data : '');
+    }
+    
+    // 用于获取系统语言，简化版
+    function getSystemLanguage() {
+      try {
+        return navigator.language || navigator.userLanguage || 'ja-JP';
+      } catch (e) {
+        return 'ja-JP';
+      }
+    }
+    
+    // 默认翻译文本
+    const defaultTranslations = {
+      'ja-JP': {
+        title: 'QuickOCR - テキスト認識結果',
+        shortcutTip: 'ショートカット {shortcut} を使用していつでも画面上のテキストを認識できます',
+        clearResults: '履歴をクリア',
+        copyText: 'テキストをコピー',
+        noResults: '認識結果はまだありません'
+      },
+      'zh-CN': {
+        title: 'QuickOCR - 文字识别结果',
+        shortcutTip: '使用快捷键 {shortcut} 随时识别屏幕上的文字',
+        clearResults: '清除历史',
+        copyText: '复制文本',
+        noResults: '尚无识别结果'
+      },
+      'en-US': {
+        title: 'QuickOCR - Text Recognition Results',
+        shortcutTip: 'Use shortcut {shortcut} to recognize text on screen anytime',
+        clearResults: 'Clear History',
+        copyText: 'Copy Text',
+        noResults: 'No recognition results yet'
+      }
+    };
+    
+    // 预设文本，优先使用日语
+    function setDefaultTexts() {
+      // 强制使用日语
+      const lang = 'ja-JP';
+      document.documentElement.setAttribute('lang', lang);
+      console.log('设置页面语言为:', lang);
+      
+      // 使用默认翻译
+      const texts = defaultTranslations[lang];
+      document.title = texts.title;
+      shortcutTipElement.textContent = texts.shortcutTip.replace('{shortcut}', shortcutElement.textContent || 'Command+Shift+E');
+      clearBtn.textContent = texts.clearResults;
+      noResultElement.textContent = texts.noResults;
+      
+      console.log('已设置默认日语界面文本');
+    }
+    
+    // 加载设置
+    async function loadSettings() {
+      try {
+        if (window.electronAPI && window.electronAPI.getSettings) {
+          const settings = await window.electronAPI.getSettings();
+          shortcutElement.textContent = settings.shortcut;
+          console.log('成功加载设置:', settings);
+          
+          // 更新快捷键文本
+          const shortcutTip = shortcutTipElement.textContent;
+          shortcutTipElement.textContent = shortcutTip.replace('{shortcut}', settings.shortcut);
+        } else {
+          console.error('electronAPI.getSettings不可用');
+        }
+      } catch (error) {
+        console.error('加载设置时出错:', error);
+      }
+    }
+    
+    // 处理OCR结果
+    function handleOCRResult(text) {
+      logDebug('收到OCR结果，内容长度:', text ? text.length : 0);
+      if (!text || text.length === 0) {
+        logDebug('收到空的OCR结果，忽略');
+        return;
+      }
+      
+      logDebug('OCR结果内容:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
+      
+      try {
+        // 保存当前结果
+        currentResult = text;
+        
+        // 添加到历史记录
+        const timestamp = new Date().toLocaleTimeString();
+        addToHistory(text, timestamp);
+        
+        // 隐藏无结果提示
+        noResultElement.style.display = 'none';
+        
+        logDebug('OCR结果处理完成');
+      } catch (error) {
+        console.error('处理OCR结果时出错:', error);
+      }
+    }
+    
+    // 处理OCR历史记录
+    function handleOcrHistory(history) {
+      try {
+        logDebug('收到OCR历史记录，条数:', history ? history.length : 0);
+        
+        if (!history || !Array.isArray(history)) {
+          logDebug('收到的OCR历史记录为空或无效');
+          return;
+        }
+        
+        // 清空当前历史记录
+        historyResults = [];
+        
+        // 添加每条记录
+        history.forEach(item => {
+          // 检查记录是否有效
+          if (item && typeof item === 'object' && typeof item.text === 'string') {
+            // 转换格式确保兼容性
+            historyResults.push({
+              text: item.text,
+              timestamp: item.time || item.timestamp || new Date().toLocaleTimeString()
+            });
+          } else {
+            logDebug('历史记录中存在无效项，已跳过', item);
+          }
+        });
+        
+        logDebug('转换并添加了历史记录', historyResults.length);
+        
+        // 更新显示
+        updateHistoryDisplay();
+        
+        // 显示或隐藏无结果提示
+        if (historyResults.length > 0) {
+          noResultElement.style.display = 'none';
+        } else {
+          noResultElement.style.display = 'block';
+        }
+        
+        // 更新localStorage
+        try {
+          const historyToSave = JSON.stringify(historyResults);
+          localStorage.setItem('ocrHistory', historyToSave);
+          logDebug('OCR历史记录已保存到localStorage');
+        } catch (error) {
+          console.error('保存OCR历史记录到localStorage失败:', error);
+        }
+      } catch (error) {
+        console.error('处理OCR历史记录时出错:', error);
+      }
+    }
+    
+    // 添加结果到历史记录
+    function addToHistory(text, timestamp) {
+      logDebug('添加OCR结果到历史记录');
+      
+      // 检查是否与上一条结果相同
+      if (historyResults.length > 0 && historyResults[0].text === text) {
+        logDebug('新结果与最近一条记录相同，更新时间戳');
+        historyResults[0].timestamp = timestamp;
+      } else {
+        // 添加到历史记录数组
+        historyResults.unshift({
+          text: text,
+          timestamp: timestamp
+        });
+        
+        // 限制历史记录数量
+        if (historyResults.length > MAX_HISTORY) {
+          historyResults = historyResults.slice(0, MAX_HISTORY);
+        }
+      }
+      
+      // 更新界面显示
+      updateHistoryDisplay();
+      
+      // 保存历史记录到localStorage
+      try {
+        const historyToSave = JSON.stringify(historyResults);
+        localStorage.setItem('ocrHistory', historyToSave);
+        logDebug('历史记录已保存到localStorage');
+        
+        // 同时也保存到主进程的文件
+        saveHistoryToFile();
+      } catch (error) {
+        console.error('保存历史记录失败:', error);
+      }
+    }
+    
+    // 保存历史记录到文件
+    function saveHistoryToFile() {
+      if (!window.electronAPI || !window.electronAPI.saveOcrHistory) {
+        logDebug('saveOcrHistory API不可用，无法保存到文件');
+        return;
+      }
+      
+      try {
+        // 转换格式
+        const historyForFile = historyResults.map(item => ({
+          text: item.text,
+          timestamp: new Date().toISOString(),
+          time: item.timestamp
+        }));
+        
+        window.electronAPI.saveOcrHistory(historyForFile)
+          .then(result => {
+            if (result.success) {
+              logDebug('历史记录已保存到文件');
+            } else {
+              console.error('保存历史记录到文件失败:', result.error);
+            }
+          })
+          .catch(err => {
+            console.error('调用saveOcrHistory失败:', err);
+          });
+      } catch (error) {
+        console.error('准备保存到文件的历史记录时出错:', error);
+      }
+    }
+    
+    // 更新历史记录显示
+    function updateHistoryDisplay() {
+      logDebug('更新历史记录显示，共记录数:', historyResults.length);
+      
+      try {
+        // 确保DOM元素存在
+        if (!resultElement) {
+          console.error('resultElement未找到，无法显示历史记录');
+          return;
+        }
+        
+        // 清空当前显示
+        resultElement.innerHTML = '';
+        
+        // 显示历史记录
+        if (historyResults && historyResults.length > 0) {
+          historyResults.forEach((item, index) => {
+            // 检查item是否有效
+            if (!item || typeof item !== 'object' || typeof item.text !== 'string') {
+              logDebug('历史记录中存在无效项，跳过显示');
+              return;
+            }
+            
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            
+            const historyMeta = document.createElement('div');
+            historyMeta.className = 'history-meta';
+            historyMeta.innerHTML = `<span>${index + 1}/${historyResults.length}</span><span>${item.timestamp || '未知时间'}</span>`;
+            
+            const historyContent = document.createElement('div');
+            historyContent.className = 'history-content';
+            historyContent.textContent = item.text;
+            
+            historyItem.appendChild(historyMeta);
+            historyItem.appendChild(historyContent);
+            resultElement.appendChild(historyItem);
+            
+            // 为每个历史项添加点击事件（点击复制对应文本）
+            historyItem.addEventListener('click', () => {
+              navigator.clipboard.writeText(item.text)
+                .then(() => {
+                  logDebug('已复制文本到剪贴板');
+                  // 添加复制成功的视觉反馈
+                  historyItem.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
+                  setTimeout(() => {
+                    historyItem.style.backgroundColor = '';
+                  }, 300);
+                })
+                .catch(err => {
+                  console.error('复制失败:', err);
+                });
+            });
+          });
+          
+          // 历史记录添加完成，确保隐藏"无结果"提示
+          if (noResultElement) {
+            noResultElement.style.display = 'none';
+          }
+        } else {
+          // 无历史记录时显示提示
+          if (noResultElement) {
+            noResultElement.style.display = 'block';
+          }
+        }
+      } catch (error) {
+        console.error('更新历史记录显示时出错:', error);
+      }
+    }
+    
+    // 清除历史
+    function clearResults() {
+      // 清除内存中的数据
+      currentResult = '';
+      historyResults = [];
+      
+      // 清除UI显示
+      resultElement.innerHTML = '';
+      noResultElement.style.display = 'block';
+      
+      // 清除localStorage中的历史记录
+      try {
+        localStorage.removeItem('ocrHistory');
+        logDebug('已清除localStorage中的历史记录');
+      } catch (error) {
+        console.error('清除localStorage中的历史记录失败:', error);
+      }
+      
+      // 保存空历史记录到文件
+      try {
+        if (window.electronAPI && window.electronAPI.saveOcrHistory) {
+          window.electronAPI.saveOcrHistory([])
+            .then(result => {
+              if (result.success) {
+                logDebug('已清除文件中的历史记录');
+              } else {
+                console.error('清除文件中的历史记录失败:', result.error);
+              }
+            })
+            .catch(err => {
+              console.error('调用saveOcrHistory清除历史记录失败:', err);
+            });
+        } else {
+          logDebug('saveOcrHistory API不可用，无法清除文件中的历史记录');
+        }
+      } catch (error) {
+        console.error('清除文件中的历史记录时出错:', error);
+      }
+    }
+    
+    // 更新国际化文本
+    function updateI18nText(data) {
+      console.log('收到国际化数据:', data);
+      i18n = data;
+      
+      // 将页面语言设置为日语
+      document.documentElement.setAttribute('lang', 'ja-JP');
+      
+      // 仅当收到有效数据时更新UI
+      if (data && Object.keys(data).length > 0) {
+        document.title = i18n.title || 'QuickOCR';
+        
+        // 检查i18n.shortcutTip是否包含占位符
+        let shortcutTipText = i18n.shortcutTip || 'ショートカット {shortcut} を使用していつでも画面上のテキストを認識できます';
+        shortcutTipText = shortcutTipText.replace('{shortcut}', shortcutElement.textContent || '');
+        shortcutTipElement.textContent = shortcutTipText;
+        
+        clearBtn.textContent = i18n.clearResults || '履歴をクリア';
+        noResultElement.textContent = i18n.noResults || '認識結果はまだありません';
+        
+        console.log('UI文本已更新为:', {
+          title: document.title,
+          shortcutTip: shortcutTipElement.textContent,
+          clearBtn: clearBtn.textContent,
+          noResult: noResultElement.textContent
+        });
+      } else {
+        console.warn('收到空的国际化数据，使用默认日语文本');
+        setDefaultTexts();
+      }
+    }
+    
+    // 从所有可能的源加载历史记录
+    async function loadHistoryFromAllSources() {
+      logDebug('开始加载历史记录...');
+      
+      // 检查API可用性
+      const apiAvailable = checkElectronAPI();
+      if (!apiAvailable) {
+        console.error('electronAPI不可用，无法加载历史记录');
+        return false;
+      }
+      
+      // 标记是否已成功加载
+      let loaded = false;
+      
+      // 从文件加载
+      try {
+          logDebug('尝试从文件加载OCR历史记录...');
+        
+          const fileHistory = await window.electronAPI.requestOcrHistory();
+          
+          if (fileHistory && Array.isArray(fileHistory) && fileHistory.length > 0) {
+            handleOcrHistory(fileHistory);
+            loaded = true;
+          logDebug('成功从文件加载历史记录');
+        } else {
+          logDebug('从文件加载历史记录为空');
+        }
+      } catch (fileError) {
+        console.error('从文件加载历史记录失败:', fileError);
+      }
+      
+      // 如果从文件加载失败，尝试获取最新OCR结果
+      if (!loaded) {
+      try {
+        logDebug('尝试获取最新OCR结果...');
+          
+          const latestOcr = await window.electronAPI.requestLatestOcr();
+        
+          if (latestOcr) {
+            // 手动创建一个历史记录项
+            const manualHistory = [{
+              text: latestOcr,
+              timestamp: new Date().toISOString(),
+              time: new Date().toLocaleTimeString()
+            }];
+            
+            handleOcrHistory(manualHistory);
+            loaded = true;
+            logDebug('成功通过最新OCR结果创建历史记录');
+          }
+        } catch (latestError) {
+          console.error('获取最新OCR结果失败:', latestError);
+        }
+      }
+      
+      return loaded;
+    }
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', async () => {
+      logDebug('DOM加载完成，开始初始化...');
+      console.log('页面DOM加载完成，开始初始化');
+      
+      setDefaultTexts();
+        
+      // 请求国际化数据
+      try {
+        if (window.electronAPI) {
+          window.electronAPI.onI18nData(texts => {
+            logDebug('收到国际化文本');
+            i18n = texts;
+            updateTexts();
+          });
+        } else {
+          console.error('electronAPI不可用，无法接收国际化文本');
+              }
+      } catch (e) {
+        console.error('注册国际化数据处理失败:', e);
+            }
+      
+      // 注册OCR结果处理
+      try {
+        window.electronAPI.onOcrResult(text => {
+          logDebug('收到OCR结果');
+          handleOCRResult(text);
+        });
+      
+        // 注册历史记录处理
+        window.electronAPI.onOcrHistory(history => {
+          logDebug('收到OCR历史记录');
+          handleOcrHistory(history);
+        });
+        
+        console.log('已注册OCR结果和历史记录处理函数');
+      } catch (apiError) {
+        console.error('注册OCR结果处理失败:', apiError);
+      }
+      
+      // 设置按钮事件处理
+      clearBtn.addEventListener('click', () => {
+        clearResults();
+      });
+      
+      // 尝试加载历史记录
+      setTimeout(async () => {
+        try {
+          const loaded = await loadHistoryFromAllSources();
+          console.log('初始化时加载历史记录结果:', loaded ? '成功' : '失败');
+        } catch (loadError) {
+          console.error('加载历史记录出错:', loadError);
+      }
+      }, 1000);
+    });
+  </script>
+</body>
+</html> 

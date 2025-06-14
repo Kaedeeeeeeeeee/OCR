@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickOCR - Settings</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    }
+    
+    body {
+      background-color: #f5f5f7;
+      color: #333;
+      padding: 20px;
+      font-size: 14px;
+    }
+    
+    h1 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    input[type="text"], select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+      font-size: 14px;
+    }
+    
+    input[type="text"]:focus, select:focus {
+      border-color: #007aff;
+      box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+    }
+    
+    input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    
+    .btn {
+      background-color: #007aff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    
+    .btn-group {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .note {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .language-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .language-option {
+      margin-left: 5px;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1e1e1e;
+        color: #f5f5f7;
+      }
+      
+      h1 {
+        color: #f5f5f7;
+      }
+      
+      .container {
+        background-color: #252525;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      }
+      
+      input[type="text"], select {
+        background-color: #333;
+        border-color: #444;
+        color: #f5f5f7;
+      }
+      
+      .note {
+        color: #aaa;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="settings-title">QuickOCR - Settings</h1>
+    
+    <div class="form-group">
+      <label for="shortcut" id="shortcut-label">OCR Shortcut</label>
+      <input type="text" id="shortcut" placeholder="e.g., Shift+Command+E (Mac) or Shift+Ctrl+E (Windows)">
+      <p class="note" id="shortcut-tip">Use '+' to separate keys. Supported modifiers: Shift, Control/Ctrl, Command/Cmd (Mac), Option/Alt, Super.</p>
+    </div>
+    
+    <div class="form-group">
+      <label id="language-label">OCR 语言</label>
+      <div class="language-options">
+        <div class="checkbox-group">
+          <input type="checkbox" id="lang-chi_sim">
+          <label for="lang-chi_sim" id="chinese-simplified-label">简体中文</label>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="lang-chi_tra">
+          <label for="lang-chi_tra" id="chinese-traditional-label">繁体中文</label>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="lang-eng">
+          <label for="lang-eng" id="english-label">英文</label>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="lang-jpn">
+          <label for="lang-jpn" id="japanese-label">日语</label>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="lang-kor">
+          <label for="lang-kor" id="korean-label">韩语</label>
+        </div>
+      </div>
+      <p class="note" id="language-tip">可以选择多种语言组合，至少选择一种语言</p>
+    </div>
+    
+    <div class="form-group">
+      <div class="checkbox-group">
+        <input type="checkbox" id="autoClipboard">
+        <label for="autoClipboard" id="auto-clipboard-label">Automatically copy recognition results to clipboard</label>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <div class="checkbox-group">
+        <input type="checkbox" id="showNotification">
+        <label for="showNotification" id="show-notification-label">Show notification when recognition is complete</label>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <div class="checkbox-group">
+        <input type="checkbox" id="showMainWindowOnStart">
+        <label for="showMainWindowOnStart" id="show-main-window-label">Show main window at startup</label>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <div class="checkbox-group">
+        <input type="checkbox" id="mergeTextParagraphs">
+        <label for="mergeTextParagraphs" id="merge-paragraphs-label">合并文本段落（移除多余换行）</label>
+      </div>
+      <p class="note" id="merge-paragraphs-tip">开启后，OCR识别的文本将自动合并成连续段落，适合识别书籍、文章等多行文本</p>
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn" id="save-btn">Save Settings</button>
+    </div>
+  </div>
+  
+  <script>
+    // 调试信息
+    console.log('设置页面脚本开始执行:', new Date().toISOString());
+    
+    // 检测electronAPI是否正确导入，并提供mock实现
+    window.addEventListener('load', function() {
+      console.log('页面加载完成，检查electronAPI状态');
+      
+      if (typeof window.electronAPI === 'undefined') {
+        console.error('严重错误: electronAPI未定义，预加载脚本可能未正确加载');
+        
+        // 创建mock版本的electronAPI以避免错误
+        window.electronAPI = {
+          getSettings: async function() {
+            console.log('使用mock getSettings');
+            return {
+              shortcut: 'Shift+Command+E',
+              language: 'eng',
+              languages: { 'eng': true },
+              autoClipboard: true,
+              showNotification: true,
+              showMainWindowOnStart: true
+            };
+          },
+          saveSettings: async function() {
+            console.log('使用mock saveSettings');
+            alert('保存设置失败：预加载脚本未正确加载。\n请重启应用后重试。');
+            return { success: false };
+          },
+          onI18nData: function(callback) {
+            console.log('使用mock onI18nData');
+            // 模拟一些基本的国际化数据
+            setTimeout(() => {
+              callback({
+                title: 'QuickOCR - 设置',
+                shortcut: 'OCR快捷键',
+                language: 'OCR语言',
+                save: '保存设置'
+              });
+            }, 100);
+          }
+        };
+        
+        setTimeout(() => {
+          alert('警告: 预加载脚本未正确加载\n部分功能可能不可用\n请尝试重启应用');
+        }, 1000);
+      } else {
+        console.log('electronAPI可用，提供的API:', Object.keys(window.electronAPI).join(', '));
+      }
+    });
+    
+    // 全局变量，用于延迟获取设置的重试机制
+    let settingsRetries = 0;
+    const MAX_RETRIES = 3;
+    
+    // 从主进程获取设置，支持重试
+    async function getSettingsWithRetry() {
+      if (typeof window.electronAPI === 'undefined' || !window.electronAPI.getSettings) {
+        console.error('无法获取设置，electronAPI.getSettings未定义');
+        return window.electronAPI ? window.electronAPI.getSettings() : null;
+      }
+      
+      try {
+        settingsRetries++;
+        console.log(`尝试获取设置 (第${settingsRetries}次)`);
+        const settings = await window.electronAPI.getSettings();
+        console.log('成功获取设置:', settings);
+        return settings;
+      } catch (error) {
+        console.error(`获取设置失败 (第${settingsRetries}次):`, error);
+        
+        if (settingsRetries < MAX_RETRIES) {
+          console.log(`${1000 * settingsRetries}毫秒后重试...`);
+          return new Promise(resolve => {
+            setTimeout(() => {
+              getSettingsWithRetry().then(resolve);
+            }, 1000 * settingsRetries);
+          });
+        } else {
+          console.error(`获取设置失败，已达到最大重试次数 (${MAX_RETRIES})`);
+          return null;
+        }
+      }
+    }
+    
+    // 当DOM加载完成后
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        console.log('设置页面加载完成，开始获取设置');
+        
+        // 获取设置
+        const settings = await getSettingsWithRetry();
+        console.log('从主进程获取的设置:', settings);
+        
+        if (!settings) {
+          console.error('无法获取设置，停止初始化');
+          return;
+        }
+        
+        // 填充表单
+        const shortcutInput = document.getElementById('shortcut');
+        shortcutInput.value = settings.shortcut || '';
+        console.log('设置快捷键输入框:', settings.shortcut);
+        
+        // 设置语言复选框
+        const languages = settings.languages || {
+          'chi_sim': true,
+          'chi_tra': false,
+          'eng': true,
+          'jpn': false,
+          'kor': false
+        };
+
+        // 根据配置设置复选框状态
+        const langCheckboxes = {
+          'chi_sim': document.getElementById('lang-chi_sim'),
+          'chi_tra': document.getElementById('lang-chi_tra'),
+          'eng': document.getElementById('lang-eng'),
+          'jpn': document.getElementById('lang-jpn'),
+          'kor': document.getElementById('lang-kor')
+        };
+
+        // 设置复选框状态
+        for (const [langCode, checkbox] of Object.entries(langCheckboxes)) {
+          if (checkbox) {
+            checkbox.checked = languages[langCode] === true;
+          }
+        }
+
+        console.log('已设置语言复选框状态:', languages);
+        
+        // 设置其他选项
+        const autoClipboardCheckbox = document.getElementById('autoClipboard');
+        if (autoClipboardCheckbox) {
+          autoClipboardCheckbox.checked = settings.autoClipboard !== false;
+        }
+        
+        const showNotificationCheckbox = document.getElementById('showNotification');
+        if (showNotificationCheckbox) {
+          showNotificationCheckbox.checked = settings.showNotification !== false;
+        }
+        
+        const showMainWindowCheckbox = document.getElementById('showMainWindowOnStart');
+        if (showMainWindowCheckbox) {
+          showMainWindowCheckbox.checked = settings.showMainWindowOnStart !== false;
+        }
+        
+        // 设置合并文本段落选项
+        const mergeTextParagraphsCheckbox = document.getElementById('mergeTextParagraphs');
+        if (mergeTextParagraphsCheckbox) {
+          mergeTextParagraphsCheckbox.checked = settings.mergeTextParagraphs === true;
+        }
+        
+        console.log('设置复选框状态完成');
+      } catch (error) {
+        console.error('初始化设置页面时出错:', error);
+        alert(`加载设置时出错: ${error.message || '未知错误'}`);
+      }
+      
+      // 监听国际化数据
+      if (window.electronAPI && window.electronAPI.onI18nData) {
+        window.electronAPI.onI18nData((data) => {
+          console.log('收到国际化数据:', data);
+          updateI18nText(data);
+        });
+      } else {
+        console.error('无法注册国际化数据监听，electronAPI不完整');
+      }
+      
+      // 保存设置按钮
+      const saveBtn = document.getElementById('save-btn');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+          try {
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
+            
+            const shortcutValue = document.getElementById('shortcut').value.trim();
+            
+            // 从复选框收集语言设置
+            const selectedLanguages = {
+              'chi_sim': document.getElementById('lang-chi_sim') ? document.getElementById('lang-chi_sim').checked : false,
+              'chi_tra': document.getElementById('lang-chi_tra') ? document.getElementById('lang-chi_tra').checked : false,
+              'eng': document.getElementById('lang-eng') ? document.getElementById('lang-eng').checked : false,
+              'jpn': document.getElementById('lang-jpn') ? document.getElementById('lang-jpn').checked : false,
+              'kor': document.getElementById('lang-kor') ? document.getElementById('lang-kor').checked : false
+            };
+
+            // 确保至少选择一种语言
+            if (!Object.values(selectedLanguages).some(Boolean)) {
+              // 如果没有选择任何语言，默认选择英语
+              selectedLanguages.eng = true;
+            }
+
+            // 生成language字符串（用于向后兼容）
+            const languageCodes = Object.entries(selectedLanguages)
+              .filter(([_, selected]) => selected)
+              .map(([code]) => code);
+
+            const newSettings = {
+              shortcut: shortcutValue || (process.platform === 'darwin' ? 'Shift+Command+E' : 'Shift+Ctrl+E'),
+              language: languageCodes.join('+'),
+              languages: selectedLanguages,
+              autoClipboard: document.getElementById('autoClipboard') ? document.getElementById('autoClipboard').checked : true,
+              showNotification: document.getElementById('showNotification') ? document.getElementById('showNotification').checked : true,
+              showMainWindowOnStart: document.getElementById('showMainWindowOnStart') ? document.getElementById('showMainWindowOnStart').checked : false,
+              mergeTextParagraphs: document.getElementById('mergeTextParagraphs') ? document.getElementById('mergeTextParagraphs').checked : false
+            };
+            
+            console.log('即将保存设置:', JSON.stringify(newSettings));
+            
+            if (!window.electronAPI || !window.electronAPI.saveSettings) {
+              throw new Error('保存功能不可用，electronAPI未正确加载');
+            }
+            
+            // 保存设置
+            const result = await window.electronAPI.saveSettings(newSettings);
+            
+            console.log('设置保存结果:', result);
+            
+            // 根据结果提供反馈
+            if (result && result.success) {
+              // 提示保存成功
+              const savedMsg = document.getElementById('settings-title').getAttribute('data-saved') || 'Settings Saved';
+              alert(savedMsg);
+            } else {
+              // 显示错误
+              const errorMsg = result && result.error ? result.error : '未知错误';
+              console.error('保存设置失败:', errorMsg);
+              alert(`保存设置失败: ${errorMsg}\n请检查应用权限或重启应用后重试。`);
+            }
+          } catch (error) {
+            console.error('保存设置时出错:', error);
+            alert(`保存设置时出错: ${error.message || '未知错误'}`);
+          } finally {
+            // 恢复按钮状态
+            const saveText = saveBtn.getAttribute('data-original-text') || 'Save Settings';
+            saveBtn.textContent = saveText;
+            saveBtn.disabled = false;
+          }
+        });
+      } else {
+        console.error('无法找到保存按钮元素');
+      }
+    });
+    
+    // 更新国际化文本
+    function updateI18nText(data) {
+      console.log('更新界面国际化文本');
+      if (!data) {
+        console.error('国际化数据为空');
+        return;
+      }
+      
+      document.title = data.title || 'QuickOCR - Settings';
+      
+      // 更新页面元素
+      const elements = {
+        'settings-title': 'title',
+        'shortcut-label': 'shortcut',
+        'shortcut-tip': 'shortcutTip',
+        'language-label': 'language',
+        'language-tip': 'languageTip',
+        'chinese-simplified-label': 'chineseSimplified',
+        'chinese-traditional-label': 'chineseTraditional',
+        'english-label': 'english',
+        'japanese-label': 'japanese',
+        'korean-label': 'korean',
+        'auto-clipboard-label': 'autoClipboard',
+        'show-notification-label': 'showNotification',
+        'show-main-window-label': 'showMainWindowOnStart',
+        'merge-paragraphs-label': 'mergeParagraphs',
+        'merge-paragraphs-tip': 'mergeParagraphsTip',
+        'save-btn': 'save'
+      };
+      
+      // 保存用于提示的文本
+      const titleElement = document.getElementById('settings-title');
+      if (titleElement) {
+        titleElement.setAttribute('data-saved', data.saved || 'Settings Saved');
+      }
+      
+      // 更新每个元素的文本
+      for (const [id, key] of Object.entries(elements)) {
+        const element = document.getElementById(id);
+        if (element && data[key]) {
+          // 对于保存按钮，保存原始文本用于恢复
+          if (id === 'save-btn') {
+            element.setAttribute('data-original-text', data[key]);
+          }
+          element.textContent = data[key];
+        } else if (!element) {
+          console.warn(`找不到元素ID: ${id}`);
+        }
+      }
+      
+      // 更新输入框占位符
+      const shortcutElement = document.getElementById('shortcut');
+      if (shortcutElement) {
+        shortcutElement.placeholder = 
+          `e.g., ${process.platform === 'darwin' ? 'Shift+Command+E' : 'Shift+Ctrl+E'}`;
+      }
+      
+      console.log('界面国际化文本更新完成');
+    }
+  </script>
+</body>
+</html> 
